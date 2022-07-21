@@ -1,14 +1,21 @@
-from json import JSONDecodeError
 import requests
 import time
 import datetime
+import argparse
 
 from colorama import Fore, init
+from md2pdf.core import md2pdf
+
 
 # Remove colorama config after each print()
 init(autoreset=True)
 
-with open('emails.txt', 'r', encoding='utf-8') as f:
+parser = argparse.ArgumentParser(description='Have I Been Pwned automation')
+parser.add_argument('-i', '--input', type=str, help='Input file', required=True)
+parser.add_argument('-o', '--output', type=str, help='Output file')
+args = parser.parse_args()
+
+with open(args.input, 'r', encoding='utf-8') as f:
     emails_list = f.read().splitlines()
 
 leaked_emails = []
@@ -20,7 +27,7 @@ print(f"\nEstimated time: {Fore.GREEN}{str(datetime.timedelta(seconds=len_emails
 for n, email in enumerate(emails_list):
     if n != 0:
         time.sleep(2)
-    print(f"\n{Fore.GREEN}{email}")
+    print(f"\n-> {Fore.GREEN}{email}")
     response = requests.get(
         f'https://haveibeenpwned.com/api/v3/breachedaccount/{email.lower()}',
         params={
@@ -53,20 +60,36 @@ for n, email in enumerate(emails_list):
     else:
         print(f"{Fore.RED}No se han encontrado leaks de este email")
     
+if args.output:
+    md_file = f'{args.output}.md'
+    with open(md_file, 'w', encoding='utf-8') as f:
+        # md_content = f'''
+        # # Leaked Emails\n\nNumber of analyzed emails: **{len(emails_list)}**\n\n
+        # Number of leaked emails: **{len(leaked_emails)}**\n\n
+        # '''
+        f.write("# Leaked Emails\n\n")
+        f.write(f"Number of analyzed emails: **{len(emails_list)}**\n\n")
+        f.write(f"Number of leaked emails: **{len(leaked_emails)}**\n\n")
+        for n, email in enumerate(leaked_emails):
+            for k, v in email.items():
+                leak_s = "leaks" if len(v) > 1 else "leak"
+                # md_content += f"### {n+1}. **{k}** -> {len(v)} {leak_s}\n\n"
+                f.write(f"### {n+1}. **{k}** -> {len(v)} {leak_s}\n\n")
+                for n2, leak in enumerate(v):
+                    # md_content += f'''
+                    # {n2+1}. **{leak['Title']}**\n\n\t- **Name:** {leak['Name']}\n\n
+                    # \t- **Breach Date:** {leak['BreachDate']}\n\n\t- **Pwn Count:** {leak['PwnCount']:,}\n\n
+                    # '''
 
-with open('leaks.md', 'w', encoding='utf-8') as f:
-    f.write("# Leaked Emails\n\n")
-    f.write(f"Number of analyzed emails: **{len(emails_list)}**\n\n")
-    f.write(f"Number of leaked emails: **{len(leaked_emails)}**\n\n")
-    for n, email in enumerate(leaked_emails):
-        for k, v in email.items():
-            leak_s = "leaks" if len(v) > 1 else "leak"
-            f.write(f"### {n+1}. {k} -> {len(v)} {leak_s}\n\n")
-            for n, leak in enumerate(v):
-                f.write(f"{n+1}. **{leak['Title']}**\n\n")
-                f.write(f"\t- **Name:** {leak['Name']}\n\n")
-                f.write(f"\t- **Breach Date:** {leak['BreachDate']}\n\n")
-                f.write(f"\t- **Pwn Count:** {leak['PwnCount']:,}\n\n")
-                if leak['Domain']:
-                    f.write(f"\t- **Domain:** {leak['Domain']}\n\n")
-                f.write(f"\t- **Description:** {leak['Description']}\n\n\n\n")
+                    f.write(f"{n2+1}. **{leak['Title']}**\n\n")
+                    f.write(f"\t- **Name:** {leak['Name']}\n\n")
+                    f.write(f"\t- **Breach Date:** {leak['BreachDate']}\n\n")
+                    f.write(f"\t- **Pwn Count:** {leak['PwnCount']:,}\n\n")
+                    if leak['Domain']:
+                        # md_content += f"\t- **Domain:** {leak['Domain']}\n\n"
+                        f.write(f"\t- **Domain:** {leak['Domain']}\n\n")
+                    # md_content += f"\t- **Description:** {leak['Description']}\n\n\n\n"
+                    f.write(f"\t- **Description:** {leak['Description']}\n\n\n\n")
+                    
+    md2pdf(f"{args.output}.pdf",
+           md_file_path=md_file)
