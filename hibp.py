@@ -15,7 +15,7 @@ leaked_emails = []
 
 len_emails_list = len(emails_list)
 
-print(f"Estimated time: {Fore.GREEN}{str(datetime.timedelta(seconds=len_emails_list*5))}")
+print(f"\nEstimated time: {Fore.GREEN}{str(datetime.timedelta(seconds=len_emails_list*2))}")
 
 for n, email in enumerate(emails_list):
     if n != 0:
@@ -30,7 +30,6 @@ for n, email in enumerate(emails_list):
             'hibp-api-key': 'fb1701b6e7674975a243c43e5c180f34',
         }
     )
-    print(response.status_code)
     if response:
         leaks = response.json()
         # print(leaks)
@@ -52,7 +51,7 @@ for n, email in enumerate(emails_list):
         leaked_emails.append({email: leaks})
         
     else:
-        print(f"\t{Fore.RED}No se han encontrado leaks de este email")
+        print(f"{Fore.RED}No se han encontrado leaks de este email")
     
 
 with open('leaks.md', 'w', encoding='utf-8') as f:
@@ -62,7 +61,7 @@ with open('leaks.md', 'w', encoding='utf-8') as f:
     for n, email in enumerate(leaked_emails):
         for k, v in email.items():
             leak_s = "leaks" if len(v) > 1 else "leak"
-            f.write(f"#### {n+1}. {k} -> {len(v)} {leak_s}\n\n")
+            f.write(f"### {n+1}. {k} -> {len(v)} {leak_s}\n\n")
             for n, leak in enumerate(v):
                 f.write(f"{n+1}. **{leak['Title']}**\n\n")
                 f.write(f"\t- **Name:** {leak['Name']}\n\n")
