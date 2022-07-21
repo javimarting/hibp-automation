@@ -15,11 +15,11 @@ leaked_emails = []
 
 len_emails_list = len(emails_list)
 
-print(f"Estimated time: {Fore.GREEN}{str(datetime.timedelta(seconds=len_emails_list*5))}\n")
+print(f"Estimated time: {Fore.GREEN}{str(datetime.timedelta(seconds=len_emails_list*5))}")
 
 for n, email in enumerate(emails_list):
     if n != 0:
-        time.sleep(1)
+        time.sleep(2)
     print(f"\n{Fore.GREEN}{email}")
     response = requests.get(
         f'https://haveibeenpwned.com/api/v3/breachedaccount/{email.lower()}',
@@ -30,26 +30,26 @@ for n, email in enumerate(emails_list):
             'hibp-api-key': 'fb1701b6e7674975a243c43e5c180f34',
         }
     )
+    print(response.status_code)
     if response:
-        with open('leaks.md', 'w', encoding='utf-8') as f:
-            leaks = response.json()
-            # print(leaks)
-            for leak in leaks:
-                # for k, v in leak.items():
-                #     print(f"{k}: {v}")
-                name = leak["Name"]
-                title = leak["Title"]
-                domain = leak["Domain"]
-                breach_date = leak["BreachDate"]
-                pwn_count = leak["PwnCount"]
-                print(f"\tLeak: {Fore.YELLOW}{name}")
-                print(f"\tTitle: {Fore.CYAN}{title}")
-                if domain:
-                    print(f"\tDomain: {Fore.CYAN}{domain}")
-                print(f"\tBreach Date: {Fore.CYAN}{breach_date}")
-                print(f"\tPwn Count: {Fore.CYAN}{pwn_count:,}")
-                print()
-            leaked_emails.append({email: leaks})
+        leaks = response.json()
+        # print(leaks)
+        for leak in leaks:
+            # for k, v in leak.items():
+            #     print(f"{k}: {v}")
+            name = leak["Name"]
+            title = leak["Title"]
+            domain = leak["Domain"]
+            breach_date = leak["BreachDate"]
+            pwn_count = leak["PwnCount"]
+            print(f"\tLeak: {Fore.YELLOW}{name}")
+            print(f"\tTitle: {Fore.CYAN}{title}")
+            if domain:
+                print(f"\tDomain: {Fore.CYAN}{domain}")
+            print(f"\tBreach Date: {Fore.CYAN}{breach_date}")
+            print(f"\tPwn Count: {Fore.CYAN}{pwn_count:,}")
+            print()
+        leaked_emails.append({email: leaks})
         
     else:
         print(f"\t{Fore.RED}No se han encontrado leaks de este email")
